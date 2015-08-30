@@ -1,43 +1,52 @@
-function MemoryGame(options) {
-    var parentElem = options.parentElem;
+function MemoryGame() {
 
-    var form = document.forms["difficultyForm"];
-    var select = form.elements.difficultySelect;
-    var start = form.elements.startGame;
-    var gameField = document.querySelector(".game-field");
-    var isStarted = false;
-    var first, second;
+    var form = document.forms["difficultyForm"],
+        select = form.elements.difficultySelect,
+        start = form.elements.startGame,
+        gameField = document.querySelector(".game-field"),
+        first,
+        second,
+        blockClick = false;
 
-    start.onclick = function() {
-        clearGameField();
-        createGameField(select.options[select.selectedIndex].value);
-        return false;
+    this.start = function() {
+        start.onclick = function() {
+            clearGameField();
+            createGameField(select.options[select.selectedIndex].value);
+            return false;
+        };
     };
 
     gameField.onclick = function(event) {
         var target = event.target;
 
         while (target != gameField) {
-
             if (target.tagName == 'TD') {
-                if (!first) {
-                    console.log(target);
-                    first = target;
-                    target.classList.add("active");
-                }
-                else if (!second) {
-                    second = target;
-                    target.classList.add("active");
-                    if (first.cardId === second.cardId) {
-                        first.classList.add("correct");
-                        second.classList.add("correct");
+                if (!blockClick) {
+                    if (!first) {
+                        first = target;
+                        target.classList.add("active");
                     }
-                }
-                else {
-                    first.classList.remove("active");
-                    second.classList.remove("active");
-                    first = undefined;
-                    second = undefined;
+                    else if (!second) {
+                        if (first === target) {
+                            return;
+                        }
+                        second = target;
+                        target.classList.add("active");
+                        if (first.cardId === second.cardId) {
+                            correct();
+                        }
+                        else {
+                            setTimeout(function() {
+                                incorrect();
+                                updateMoves();
+                                blockClick = false;
+                            }, 1000);
+                            blockClick = true;
+                        }
+                    }
+                    else {
+                        incorrect();
+                    }
                 }
                 return;
             }
@@ -47,7 +56,6 @@ function MemoryGame(options) {
     gameField.onmousedown = function() {
         return false;
     };
-
 
     function createGameField(difficultyLevel) {
         var cols, rows, cardsNumber;
@@ -71,15 +79,22 @@ function MemoryGame(options) {
                 td.cardId = cards[k];
                 tr.appendChild(td);
                 var img = document.createElement("img");
-                img.src = "cards/" + cards[k] + ".gif";
+                img.src = "cards/" + cards[k] + ".png";
                 td.appendChild(img);
             }
         }
 
-        isStarted = true;
+        var movesElem = document.createElement("span");
+        movesElem.appendChild(document.createTextNode("Moves: "));
+        gameField.appendChild(movesElem);
+
+        var movesValue = document.createElement("span");
+        movesValue.className = "moves-value";
+        movesValue.appendChild(document.createTextNode("0"));
+        gameField.appendChild(movesValue);
     }
     function clearGameField() {
-        if (isStarted) {
+        if (gameField.children[0]) {
             gameField.innerHTML = "";
         }
     }
@@ -101,8 +116,22 @@ function MemoryGame(options) {
         return cards;
 
     }
+
+    function updateMoves() {
+        var movesValue = document.querySelector(".moves-value");
+        movesValue.innerHTML = +movesValue.innerHTML + 1;
+    }
+    function correct () {
+        first.classList.add("correct");
+        second.classList.add("correct");
+    }
+    function incorrect() {
+        first.classList.remove("active");
+        second.classList.remove("active");
+        first = undefined;
+        second = undefined;
+    }
 }
 
-var game = new MemoryGame({
-    parentElem: document.querySelector(".game")
-});
+var game = new MemoryGame();
+game.start();
