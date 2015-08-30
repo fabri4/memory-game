@@ -40,7 +40,7 @@ function MemoryGame() {
                                 incorrect();
                                 updateMoves();
                                 blockClick = false;
-                            }, 500);
+                            }, 495);
                             blockClick = true;
                         }
                     }
